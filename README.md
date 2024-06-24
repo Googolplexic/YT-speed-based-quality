@@ -8,3 +8,9 @@ Useful for not wanting to use up all of your data/bandwidth when trying to quick
 Speed settings go all the way up to 4 times speed in case you have another extension installed that increases your speed to beyond the default 2 times speed.
 
 ![image](https://github.com/Googolplexic/YT-speed-based-quality/assets/52732344/5ee09bbe-f084-4d35-b40e-4f84d1711a87)
+
+# To install 
+- Download all the code as a zip
+- Unzip
+- Go to dev mode on a Chromium-based browser
+- Load unpacked
