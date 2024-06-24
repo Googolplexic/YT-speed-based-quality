@@ -44,10 +44,11 @@ function setHighestQualityAvailable(limit) {
 		'480p',
 		'360p',
 		'240p',
-		'144p',
 	];
 	let index = qualityList.indexOf(limit);
-	while (setQuality(qualityList[index]) === 1) { index++; }
+	while (setQuality(qualityList[index]) === 1 && index <= 7) {
+		index++;
+	}
 }
 
 // Function to adjust quality based on playback speed
@@ -56,12 +57,17 @@ function adjustQuality() {
 	if (player) {
 		const speed = player.playbackRate;
 		console.log(`Current playback speed: ${speed}`);
+		chrome.storage.sync.get(['speedThreshold', 'qualityAbove', 'qualityBelow'], function (items) {
+			const threshold = parseFloat(items.speedThreshold || '2.0');
+			const qualityAbove = items.qualityAbove || '480p';
+			const qualityBelow = items.qualityBelow || '1080p';
 
-		if (speed >= 2) {
-			setHighestQualityAvailable('480p');
-		} else {
-			setHighestQualityAvailable('1080p');
-		}
+			if (speed >= threshold) {
+				setHighestQualityAvailable(qualityAbove); // Quality for speeds above the threshold
+			} else {
+				setHighestQualityAvailable(qualityBelow); // Quality for speeds below or equal to the threshold
+			}
+		});
 	} else {
 		console.error('Video element not found.');
 	}

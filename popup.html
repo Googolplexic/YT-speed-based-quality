@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>YouTube Quality Adjuster</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        #thresholdValue {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>YouTube Quality Adjuster</h1>
+    <label>Speed Threshold:
+        <input type="range" id="speedThreshold" min="0.25" max="4.0" step="0.25" value="1.0">
+        <span id="thresholdValue">1.0</span>x
+    </label>
+    <label>Quality for Speed >= Threshold:
+        <select id="qualityAbove">
+            <option value="4320p">8K/FUHD/4320p</option>
+            <option value="2160p">4K/UHD/2160p</option>
+            <option value="1440p">2K/QHD/1080p</option>
+            <option value="1080p">FHD/1080p</option>
+            <option value="720p">HD/720p</option>
+            <option value="480p">SD/480p</option>
+            <option value="360p">360p</option>
+            <option value="240p">240p</option>
+
+            <!-- Add more options as needed -->
+        </select>
+    </label>
+    <label>Quality for Speed < Threshold: <select id="qualityBelow">
+            <option value="4320p">8K/FUHD/4320p</option>
+            <option value="2160p">4K/UHD/2160p</option>
+            <option value="1440p">2K/QHD/1080p</option>
+            <option value="1080p">FHD/1080p</option>
+            <option value="720p">HD/720p</option>
+            <option value="480p">SD/480p</option>
+            <option value="360p">360p</option>
+            <option value="240p">240p</option>
+            </select>
+    </label>
+    <button id="save">Save</button>
+    <button id="toggleButton">Disable</button>
+    <script src="popup.js"></script>
+</body>
+
+</html>

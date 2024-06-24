@@ -5,7 +5,8 @@
     "description": "Adjust YouTube video quality based on playback speed",
     "permissions": [
         "activeTab",
-        "scripting"
+        "scripting",
+        "storage"
     ],
     "background": {
         "service_worker": "background.js"
