@@ -11,5 +11,5 @@ Speed settings go all the way up to 4 times speed in case you have another exten
 
 # To install 
 - Download all the code as a zip and unzip it (or just clone it)
-- Go to dev mode on a Chromium-based browser
+- Go to dev mode on extension manager on a Chromium-based browser
 - Load unpacked
