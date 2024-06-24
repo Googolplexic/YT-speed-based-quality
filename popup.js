@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const qualityAbove = document.getElementById('qualityAbove');
     const qualityBelow = document.getElementById('qualityBelow');
     // Load saved settings
-    chrome.storage.sync.get(['speedThreshold', 'qualityAbove', 'qualityBelow'], function (items) {
+    chrome.storage.sync.get(['speedThreshold', 'qualityAbove', 'qualityBelow', 'enabled'], function (items) {
         if (items.speedThreshold) {
             speedThreshold.value = items.speedThreshold;
             thresholdValue.textContent = items.speedThreshold;

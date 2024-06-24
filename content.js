@@ -57,7 +57,11 @@ function adjustQuality() {
 	if (player) {
 		const speed = player.playbackRate;
 		console.log(`Current playback speed: ${speed}`);
-		chrome.storage.sync.get(['speedThreshold', 'qualityAbove', 'qualityBelow'], function (items) {
+		chrome.storage.sync.get(['speedThreshold', 'qualityAbove', 'qualityBelow', 'enabled'], function (items) {
+			if (!items.enabled) {
+				console.log('Extension is disabled.');
+				return;
+			}
 			const threshold = parseFloat(items.speedThreshold || '2.0');
 			const qualityAbove = items.qualityAbove || '480p';
 			const qualityBelow = items.qualityBelow || '1080p';
