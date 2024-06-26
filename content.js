@@ -10,7 +10,6 @@ function simulateClick(element) {
 
 // Function to set video quality
 function setQuality(quality) {
-	console.log('quality: ', quality);
 	qualityList = [
 		'4320p',
 		'2160p',
