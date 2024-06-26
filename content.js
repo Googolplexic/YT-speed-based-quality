@@ -10,6 +10,7 @@ function simulateClick(element) {
 
 // Function to set video quality
 function setQuality(quality) {
+	console.log('quality: ', quality);
 	qualityList = [
 		'4320p',
 		'2160p',
@@ -34,7 +35,7 @@ function setQuality(quality) {
 	if (!qualityMenuItem) { return 2; }
 	var desiredQualityItem;
 	simulateClick(qualityMenuItem);
-	while (!desiredQualityItem && index <= 8) {
+	while (!desiredQualityItem && index <= qualityList.length) {
 		desiredQualityItem = Array.from(document.querySelectorAll('.ytp-quality-menu .ytp-menuitem')).find(item => item.innerText.includes(qualityList[index]));
 		if (desiredQualityItem) {
 			console.log(`Quality set to ${qualityList[index]}`);
