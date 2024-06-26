@@ -10,31 +10,6 @@ function simulateClick(element) {
 
 // Function to set video quality
 function setQuality(quality) {
-	const settingsButton = document.querySelector('.ytp-settings-button');
-	if (!settingsButton) return 2;
-
-	simulateClick(settingsButton);
-
-	const qualityMenuItem = Array.from(document.querySelectorAll('.ytp-menuitem-label')).find(item => item.innerText === 'Quality');
-	if (!qualityMenuItem) return 2;
-
-	simulateClick(qualityMenuItem);
-
-	const desiredQualityItem = Array.from(document.querySelectorAll('.ytp-quality-menu .ytp-menuitem')).find(item => item.innerText.includes(quality));
-	if (desiredQualityItem) {
-		simulateClick(desiredQualityItem);
-		console.log(`Quality set to ${quality}`);
-	} else {
-		console.log(`Desired quality ${quality} is not available.`);
-		return 1;
-	}
-
-	// Close the settings menu
-	simulateClick(settingsButton);
-	return 0;
-}
-
-function setHighestQualityAvailable(limit) {
 	qualityList = [
 		'4320p',
 		'2160p',
@@ -44,11 +19,36 @@ function setHighestQualityAvailable(limit) {
 		'480p',
 		'360p',
 		'240p',
+		'144p',
+		'Auto',
 	];
-	let index = qualityList.indexOf(limit);
-	while (setQuality(qualityList[index]) === 1 && index <= 7) {
-		index++;
+
+	let index = qualityList.indexOf(quality);
+
+	const settingsButton = document.querySelector('.ytp-settings-button');
+	if (!settingsButton) { return 2; };
+
+	simulateClick(settingsButton);
+
+	const qualityMenuItem = Array.from(document.querySelectorAll('.ytp-menuitem-label')).find(item => item.innerText === 'Quality');
+	if (!qualityMenuItem) { return 2; }
+	var desiredQualityItem;
+	simulateClick(qualityMenuItem);
+	while (!desiredQualityItem && index <= 8) {
+		desiredQualityItem = Array.from(document.querySelectorAll('.ytp-quality-menu .ytp-menuitem')).find(item => item.innerText.includes(qualityList[index]));
+		if (desiredQualityItem) {
+			console.log(`Quality set to ${qualityList[index]}`);
+			simulateClick(desiredQualityItem);
+
+		} else {
+			console.log(`Desired quality ${qualityList[index]} is not available, trying a lower quality.`);
+			index++;
+		}
 	}
+
+	// Close the settings menu
+	simulateClick(settingsButton);
+	return 0;
 }
 
 // Function to adjust quality based on playback speed
@@ -67,9 +67,9 @@ function adjustQuality() {
 			const qualityBelow = items.qualityBelow || '1080p';
 
 			if (speed >= threshold) {
-				setHighestQualityAvailable(qualityAbove); // Quality for speeds above the threshold
+				setQuality(qualityAbove); // Quality for speeds above the threshold
 			} else {
-				setHighestQualityAvailable(qualityBelow); // Quality for speeds below or equal to the threshold
+				setQuality(qualityBelow); // Quality for speeds below or equal to the threshold
 			}
 		});
 	} else {
