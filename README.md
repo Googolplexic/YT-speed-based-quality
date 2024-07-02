@@ -10,6 +10,6 @@ Speed settings go all the way up to 4 times speed in case you have another exten
 ![image](https://github.com/Googolplexic/YT-speed-based-quality/assets/52732344/5ee09bbe-f084-4d35-b40e-4f84d1711a87)
 
 # To install 
-- Download all the code as a zip and unzip it (or just clone it)
+- Download all the code as a zip from releases and unzip it (or just clone it)
 - Go to developer mode on extension manager on a Chromium-based browser
 - Load unpacked and select the (unzipped) folder
