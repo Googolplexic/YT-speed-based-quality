@@ -1,60 +1,271 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Quality Adjuster</title>
     <style>
+        :root {
+            --youtube-red: #ff3b3b;
+            --youtube-dark-red: #cc2929;
+            --youtube-black: #282828;
+            --youtube-fade: #f1f1f1;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            padding: 10px;
+            width: 320px;
+            font-family: 'Roboto', 'Segoe UI', sans-serif;
+            padding: 12px;
+            /* Reduced from 16px */
+            background: linear-gradient(135deg, var(--youtube-red) 0%, var(--youtube-dark-red) 100%);
+            margin: 0;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.98);
+            padding: 16px;
+            /* Reduced from 20px */
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 18px;
+            /* Reduced from 20px */
+            color: var(--youtube-red);
+            margin: 0 0 16px 0;
+            /* Reduced from 20px */
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .control-group {
+            background: white;
+            padding: 8px;
+            /* Reduced from 12px */
+            border-radius: 8px;
+            margin-bottom: 8px;
+            /* Reduced from 12px */
+            transition: transform 0.2s;
+            border: 1px solid #eee;
+        }
+
+        .control-group:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         label {
             display: block;
-            margin-top: 10px;
+            margin-bottom: 4px;
+            /* Reduced from 8px */
+            color: var(--youtube-black);
+            font-size: 14px;
+            font-weight: 500;
         }
 
-        #thresholdValue {
-            font-weight: bold;
+        select {
+            width: 100%;
+            padding: 6px;
+            /* Reduced from 8px */
+            border: 2px solid #e8eaed;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #3c4043;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        select:hover {
+            border-color: var(--youtube-red);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            background: #e8eaed;
+            border-radius: 4px;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--youtube-red);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider-value {
+            min-width: 40px;
+            padding: 4px 8px;
+            background: var(--youtube-red);
+            color: white;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        #toggleButton {
+            width: 100%;
+            padding: 8px;
+            /* Reduced from 12px */
+            border: none;
+            border-radius: 6px;
+            background: var(--youtube-red);
+            color: white;
+            font-weight: 500;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 1 !important;
+            position: relative;
+            z-index: 10;
+        }
+
+        #toggleButton:hover {
+            background: var(--youtube-dark-red);
+            transform: translateY(-1px);
+        }
+
+        #toggleButton.disabled {
+            background: var(--youtube-black);
+            color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-wrapper {
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .content-wrapper.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 12px 0;
+            /* Reduced from 16px */
+            padding: 8px;
+            /* Reduced from 12px */
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #5f6368;
+        }
+
+        .preset-controls {
+            margin-top: 12px;
+            /* Reduced from 16px */
+            padding-top: 12px;
+            /* Reduced from 16px */
+        }
+
+        .credits {
+            text-align: center;
+            margin-top: 12px;
+            /* Reduced from 16px */
+            font-size: 12px;
+            color: #666;
+        }
+
+        .credits a {
+            color: var(--youtube-red);
+            text-decoration: none;
+        }
+
+        .credits a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 
 <body>
-    <h1>YouTube Quality Adjuster</h1>
-    <label>Speed Threshold:
-        <input type="range" id="speedThreshold" min="0.25" max="4.0" step="0.25" value="1.0">
-        <span id="thresholdValue">1.0</span>x
-    </label>
-    <label>Quality for Speed >= Threshold:
-        <select id="qualityAbove">
-            <option value="4320p">8K/FUHD/4320p</option>
-            <option value="2160p">4K/UHD/2160p</option>
-            <option value="1440p">2K/QHD/1080p</option>
-            <option value="1080p">FHD/1080p</option>
-            <option value="720p">HD/720p</option>
-            <option value="480p">SD/480p</option>
-            <option value="360p">360p</option>
-            <option value="240p">240p</option>
-            <option value="144p">144p</option>
-            <option value="Auto">Auto</option>
-        </select>
-    </label>
-    <label>Quality for Speed < Threshold: <select id="qualityBelow">
-            <option value="4320p">8K/FUHD/4320p</option>
-            <option value="2160p">4K/UHD/2160p</option>
-            <option value="1440p">2K/QHD/1080p</option>
-            <option value="1080p">FHD/1080p</option>
-            <option value="720p">HD/720p</option>
-            <option value="480p">SD/480p</option>
-            <option value="360p">360p</option>
-            <option value="240p">240p</option>
-            <option value="144p">144p</option>
-            <option value="Auto">Auto</option>
-            </select>
-    </label>
-    <button id="save">Save</button>
-    <button id="toggleButton">Disable</button>
+    <div class="container">
+        <h1>YouTube Quality Adjuster</h1>
+
+        <div class="content-wrapper">
+            <div class="control-group">
+                <label>Speed Threshold</label>
+                <div class="slider-container">
+                    <input type="range" id="speedThreshold" min="0.25" max="4.0" step="0.25" value="1.0" title="Playback speed threshold for quality adjustment">
+                    <span id="thresholdValue" class="slider-value">1.0x</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="qualityAbove">Above Threshold</label>
+                <select id="qualityAbove">
+                    <option value="4320p">8K</option>
+                    <option value="2160p">4K</option>
+                    <option value="1440p">2K</option>
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="480p">480p</option>
+                    <option value="360p">360p</option>
+                    <option value="240p">240p</option>
+                    <option value="144p">144p</option>
+                    <option value="Auto">Auto</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="qualityBelow">Below Threshold</label>
+                <select id="qualityBelow">
+                    <option value="4320p">8K</option>
+                    <option value="2160p">4K</option>
+                    <option value="1440p">2K</option>
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="480p">480p</option>
+                    <option value="360p">360p</option>
+                    <option value="240p">240p</option>
+                    <option value="144p">144p</option>
+                    <option value="Auto">Auto</option>
+                </select>
+            </div>
+
+            <div class="preset-controls">
+                <label for="presets">Presets</label>
+                <select id="presets">
+                    <option value="default">Regular</option>
+                    <option value="data-saver">Data Saver</option>
+                    <option value="high-quality">High Quality</option>
+                    <option value="balanced">Balanced</option>
+                </select>
+            </div>
+
+            <div class="stats">
+                <div>📊 <span id="videosOptimized">0</span> videos</div>
+                <div>💾 <span id="dataSaved">0</span> MB saved</div>
+            </div>
+        </div>
+
+        <button id="toggleButton">Enable</button>
+        <div class="credits">
+            Created by <a href="https://www.colemanlai.com" target="_blank" rel="noopener noreferrer">Coleman Lai</a>
+        </div>
+    </div>
     <script src="popup.js"></script>
 </body>
 
