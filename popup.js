@@ -120,7 +120,12 @@ document.addEventListener('DOMContentLoaded', function () {
         updatePresetSelection();
     }
 
-    speedThreshold.addEventListener('input', handleManualChange);
+    // Update threshold display and trigger save
+    speedThreshold.addEventListener('input', function () {
+        thresholdValue.textContent = this.value; 
+        handleManualChange();
+    });
+
     qualityAbove.addEventListener('change', handleManualChange);
     qualityBelow.addEventListener('change', handleManualChange);
 

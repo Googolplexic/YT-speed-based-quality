@@ -8,130 +8,206 @@ function simulateClick(element) {
 	element.dispatchEvent(event);
 }
 
-let lastQuality = 'Auto';
+let currentState = {
+	speed: null,
+	quality: null,
+	threshold: null,
+	isChanging: false  // Add lock to prevent concurrent changes
+};
 
-function setQuality(quality) {
-	const qualityList = [
-		'4320p', '2160p', '1440p', '1080p', '720p',
-		'480p', '360p', '240p', '144p', 'Auto'
-	];
+let lastChangeTime = 0;
+const CHANGE_COOLDOWN = 2000; // 2 seconds cooldown between changes
 
-	let index = qualityList.indexOf(quality);
-	const settingsButton = document.querySelector('.ytp-settings-button');
-	if (!settingsButton) return;
-
-	// Open settings menu
-	simulateClick(settingsButton);
-
-	// First timeout to wait for settings menu
-	setTimeout(() => {
-		// Try to find quality menu item (both by text and aria-label)
-		const qualityMenuItem = Array.from(document.querySelectorAll('.ytp-menuitem'))
-			.find(item => {
-				const label = item.querySelector('.ytp-menuitem-label');
-				return label && (
-					label.textContent === 'Quality' ||
-					item.getAttribute('aria-label')?.includes('Quality')
-				);
-			});
-
-		if (!qualityMenuItem) {
-			simulateClick(settingsButton); // Close menu if quality option not found
-			return;
-		}
-
-		simulateClick(qualityMenuItem);
-
-		// Second timeout to wait for quality submenu
-		setTimeout(() => {
-			let foundQuality = false;
-			while (!foundQuality && index < qualityList.length) {
-				const currentQuality = qualityList[index];
-				const qualityItems = document.querySelectorAll('.ytp-menuitem');
-
-				for (const item of qualityItems) {
-					if (item.textContent.includes(currentQuality.replace('p', ''))) {
-						simulateClick(item);
-						console.log(`Successfully set quality to ${currentQuality}`);
-						lastQuality = currentQuality;
-						foundQuality = true;
-						break;
-					}
-				}
-
-				if (!foundQuality) {
-					console.log(`Quality ${currentQuality} not available, trying lower`);
-					index++;
-				}
-			}
-
-			// Close settings menu
-			setTimeout(() => {
-				simulateClick(settingsButton);
-			}, 100);
-		}, 150); // Increased delay for quality submenu
-	}, 150); // Increased delay for main menu
+// Add new function to handle video initialization
+function initializeVideo() {
+	currentState = {
+		speed: null,
+		quality: null,
+		threshold: null,
+		isChanging: false
+	};
+	debouncedAdjustQuality();
 }
 
-function adjustQuality() {
-	try {
-		const player = document.querySelector('video');
-		if (!player) return;
+// Add mutation observer to detect video player changes
+const videoObserver = new MutationObserver((mutations) => {
+	for (const mutation of mutations) {
+		const nodes = Array.from(mutation.addedNodes);
+		if (nodes.some(node => node.tagName === 'VIDEO')) {
+			console.log('New video detected, initializing...');
+			initializeVideo();
+			break;
+		}
+	}
+});
 
-		chrome.storage.sync.get(['speedThreshold', 'qualityAbove', 'qualityBelow', 'enabled'], function (items) {
-			if (!items.enabled) {
-				console.log('Extension is disabled.');
+// Observe video player container
+videoObserver.observe(document.documentElement, {
+	childList: true,
+	subtree: true
+});
+
+// Listen for navigation events
+document.addEventListener('yt-navigate-finish', initializeVideo);
+document.addEventListener('yt-page-data-updated', initializeVideo);
+
+function shouldChangeQuality(speed, threshold) {
+	const wasAbove = currentState.speed >= currentState.threshold;
+	const isAbove = speed >= threshold;
+	return wasAbove !== isAbove || currentState.quality === null;
+}
+
+function setQuality(quality) {
+	if (currentState.isChanging) {
+		console.log('🔒 Quality change already in progress');
+		return Promise.resolve(false);
+	}
+
+	return new Promise((resolve) => {
+		currentState.isChanging = true;
+		console.log(`📊 Attempting to set quality to ${quality}`);
+
+		// Wait for player to be ready
+		function waitForPlayer(attempts = 0) {
+			const settingsButton = document.querySelector('.ytp-settings-button');
+			const player = document.querySelector('video');
+
+			if (!settingsButton || !player || !player.readyState) {
+				if (attempts > 10) {
+					console.log('❌ Player not ready after 10 attempts');
+					currentState.isChanging = false;
+					return resolve(false);
+				}
+				console.log('⏳ Waiting for player to be ready...');
+				setTimeout(() => waitForPlayer(attempts + 1), 500);
 				return;
 			}
 
-			const speed = player.playbackRate;
-			const threshold = parseFloat(items.speedThreshold || '2.0');
-			const qualityAbove = items.qualityAbove || '480p';
-			const qualityBelow = items.qualityBelow || '1080p';
+			openSettings();
+		}
 
-			console.log(`Speed: ${speed}, Threshold: ${threshold}`);
-			if (speed >= threshold) {
-				setQuality(qualityAbove);
+		function openSettings() {
+			// Force close any open menu first
+			const openMenu = document.querySelector('.ytp-settings-menu');
+			if (openMenu && openMenu.style.display !== 'none') {
+				const settingsButton = document.querySelector('.ytp-settings-button');
+				simulateClick(settingsButton);
+				setTimeout(startQualityChange, 300);
 			} else {
-				setQuality(qualityBelow);
+				startQualityChange();
 			}
-		});
-	} catch (error) {
-		console.debug('Quality adjustment skipped');
-	}
+		}
+
+		function startQualityChange() {
+			const settingsButton = document.querySelector('.ytp-settings-button');
+			simulateClick(settingsButton);
+			console.log('🔓 Opening settings menu');
+
+			setTimeout(() => {
+				const qualityButton = Array.from(document.querySelectorAll('.ytp-menuitem'))
+					.find(item => item.textContent.includes('Quality'));
+
+				if (!qualityButton) {
+					console.log('❌ Quality menu not found');
+					simulateClick(settingsButton);
+					currentState.isChanging = false;
+					return resolve(false);
+				}
+
+				simulateClick(qualityButton);
+				console.log('🎯 Opening quality submenu');
+
+				// Increased timeout from 300 to 500ms to ensure menu is fully loaded
+				setTimeout(() => {
+					const qualityOption = Array.from(document.querySelectorAll('.ytp-menuitem'))
+						.find(item => item.textContent.includes(quality.replace('p', '')));
+
+					if (qualityOption) {
+						simulateClick(qualityOption);
+						console.log(`✅ Setting quality to ${quality}`);
+
+						const player = document.querySelector('video');
+						if (player) {
+							currentState.quality = quality;
+							currentState.speed = player.playbackRate;
+							console.log('📝 State updated:', currentState);
+						}
+					} else {
+						console.log(`⚠️ Quality option ${quality} not found`);
+					}
+
+					// Always close settings
+					setTimeout(() => {
+						currentState.isChanging = false;
+						resolve(true);
+					}, 300);
+				}, 700); 
+			}, 300);
+		}
+
+		// Start the process
+		waitForPlayer();
+	});
 }
 
-// Use error boundaries for event listeners
-document.addEventListener('ratechange', (e) => {
-	try {
-		adjustQuality();
-	} catch (error) {
-		console.debug('Rate change handler skipped');
-	}
-}, true);
+function debounce(func, wait) {
+	let timeout;
+	let lastArgs;
+	let lastThis;
+	let result;
+	let lastRun = 0;
 
-setTimeout(adjustQuality, 1000); // Initial adjustment with delay
+	return function debounced(...args) {
+		const context = this;
+		const now = Date.now();
 
-// Add error event listener to ignore YouTube analytics errors
-window.addEventListener('error', function (e) {
-	if (e.target?.src?.includes('youtube.com/api/stats') ||
-		e.target?.src?.includes('play.google.com/log')) {
-		e.preventDefault();
-		e.stopPropagation();
-		return true;
-	}
-}, true);
-
-// Update message listener to handle force updates
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	if (request.action === "adjustQuality") {
-		if (request.force) {
-			// Force immediate quality adjustment
-			lastQuality = 'Auto'; // Reset last quality to force update
-			adjustQuality();
-		} else {
-			adjustQuality();
+		if (timeout) {
+			clearTimeout(timeout);
 		}
-	}
-	return true;
-});
+
+		const later = () => {
+			const delta = Date.now() - lastRun;
+			if (delta >= wait) {
+				func.apply(context, args);
+				lastRun = Date.now();
+			} else {
+				timeout = setTimeout(later, wait - delta);
+			}
+		};
+
+		timeout = setTimeout(later, wait);
+	};
+}
+
+const debouncedAdjustQuality = debounce(async () => {
+	const player = document.querySelector('video');
+	if (!player) return;
+
+	chrome.storage.sync.get(['speedThreshold', 'qualityAbove', 'qualityBelow', 'enabled'], async function (items) {
+		if (!items.enabled) {
+			console.log('🔴 Extension disabled');
+			return;
+		}
+
+		const speed = player.playbackRate;
+		const threshold = parseFloat(items.speedThreshold || '2.0');
+		currentState.threshold = threshold;
+
+		console.log(`🎮 Speed: ${speed}, Threshold: ${threshold}, Current Quality: ${currentState.quality}`);
+
+		if (shouldChangeQuality(speed, threshold)) {
+			const targetQuality = speed >= threshold ? items.qualityAbove : items.qualityBelow;
+			console.log(`🎯 Target quality: ${targetQuality}`);
+			await setQuality(targetQuality);
+		}
+	});
+}, 500);
+
+// Replace adjustQuality with debounced version
+document.addEventListener('ratechange', debouncedAdjustQuality, true);
+
+// Increase initial wait time
+setTimeout(debouncedAdjustQuality, 2000);
+
+// Initialize immediately on page load
+initializeVideo();
