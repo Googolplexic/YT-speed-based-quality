@@ -2,6 +2,7 @@ import './App.css'
 import { Helmet } from 'react-helmet'
 import { Analytics } from "@vercel/analytics/react"
 import favicon from './assets/favicon.ico'
+import screenshot from './assets/screenshot.png'
 
 function App() {
   return (
@@ -13,12 +14,14 @@ function App() {
       </Helmet>
 
       <header>
-        <div className="logo">YouTube Speed Optimizer</div>
-        <nav>
-          <a href="#features">Features</a>
-          <a href="#presets">Presets</a>
-          <a href="#install">Install</a>
-        </nav>
+        <div className="header-content">
+          <div className="logo">YouTube Data Saver</div>
+          <nav>
+            <a href="#features">Features</a>
+            <a href="#presets">Presets</a>
+            <a href="#install">Install</a>
+          </nav>
+        </div>
       </header>
 
       <main>
@@ -30,20 +33,25 @@ function App() {
           </div>
         </section>
 
-        <section id="features" className="features">
-          <h2>Features</h2>
-          <div className="feature-grid">
-            <div className="feature-card">
-              <h3>Auto Quality</h3>
-              <p>Reduces resolution at higher speeds to save data.</p>
-            </div>
-            <div className="feature-card">
-              <h3>Speed Detection</h3>
-              <p>Changes quality when you adjust playback speed.</p>
-            </div>
-            <div className="feature-card">
-              <h3>Presets</h3>
-              <p>Choose from presets or create custom settings.</p>
+        <section className="features-showcase">
+          <div className="screenshot-container">
+            <img src={screenshot} alt="YouTube Speed Optimizer Chrome Extension Screenshot" />
+          </div>
+          <div className="features-content" id='features'>
+            <h2>Features</h2>
+            <div className="feature-grid">
+              <div className="feature-card">
+                <h3>Auto Quality</h3>
+                <p>Reduces resolution at higher speeds to save data.</p>
+              </div>
+              <div className="feature-card">
+                <h3>Speed Detection</h3>
+                <p>Changes quality when you adjust playback speed.</p>
+              </div>
+              <div className="feature-card">
+                <h3>Presets</h3>
+                <p>Choose from presets or create custom settings.</p>
+              </div>
             </div>
           </div>
         </section>
