@@ -100,18 +100,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateUIState(enabled) {
         const wrapper = document.querySelector('.content-wrapper');
-        toggleButton.textContent = enabled ? 'Disable' : 'Enable';
-        toggleButton.className = enabled ? '' : 'disabled';
+        const checkbox = document.querySelector('#toggleButton');
+        checkbox.checked = enabled;
         wrapper.className = `content-wrapper ${enabled ? '' : 'disabled'}`;
     }
 
     // Toggle extension
-    toggleButton.addEventListener('click', function () {
-        chrome.storage.sync.get('enabled', function (items) {
-            const newState = !items.enabled;
-            chrome.storage.sync.set({ enabled: newState }, function () {
-                updateUIState(newState);
-            });
+    document.getElementById('toggleButton').addEventListener('change', function (e) {
+        chrome.storage.sync.set({ enabled: e.target.checked }, function () {
+            updateUIState(e.target.checked);
         });
     });
 });
