@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const thresholdValue = document.getElementById('thresholdValue');
     const qualityAbove = document.getElementById('qualityAbove');
     const qualityBelow = document.getElementById('qualityBelow');
+    const presetsSelect = document.getElementById('presets');
 
     const presets = {
         'efficient': {
@@ -28,6 +29,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
+    // Add 'custom' option to presets
+    presetsSelect.insertAdjacentHTML('afterbegin', '<option value="custom">Custom</option>');
+
+    let isCustom = false; // Add this at the top with other variables
+
     // Load saved settings
     chrome.storage.sync.get(['speedThreshold', 'qualityAbove', 'qualityBelow', 'enabled'], function (items) {
         if (chrome.runtime.lastError) {
@@ -48,6 +54,22 @@ document.addEventListener('DOMContentLoaded', function () {
         if (items.qualityAbove) qualityAbove.value = items.qualityAbove;
         if (items.qualityBelow) qualityBelow.value = items.qualityBelow;
         updateUIState(items.enabled);
+
+        // Check if initial settings match any preset
+        const currentSettings = {
+            threshold: Number(items.speedThreshold || speedThreshold.value),
+            above: items.qualityAbove || qualityAbove.value,
+            below: items.qualityBelow || qualityBelow.value
+        };
+
+        const matchingPreset = Object.entries(presets).find(([_, preset]) =>
+            preset.threshold === currentSettings.threshold &&
+            preset.above === currentSettings.above &&
+            preset.below === currentSettings.below
+        );
+
+        isCustom = !matchingPreset;
+        updatePresetSelection();
     }
 
     function saveSettings() {
@@ -58,20 +80,60 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Update threshold display and auto-save
-    speedThreshold.addEventListener('input', function () {
-        thresholdValue.textContent = speedThreshold.value;
-        saveSettings();
-    });
+    function updatePresetSelection() {
+        // Always remove existing custom option first
+        const customOption = presetsSelect.querySelector('option[value="custom"]');
+        if (customOption) customOption.remove();
 
-    // Add auto-save to quality selectors
-    qualityAbove.addEventListener('change', saveSettings);
-    qualityBelow.addEventListener('change', saveSettings);
+        const currentSettings = {
+            threshold: Number(speedThreshold.value),
+            above: qualityAbove.value,
+            below: qualityBelow.value
+        };
+
+        // Only show custom if we're in custom mode
+        if (isCustom) {
+            presetsSelect.insertAdjacentHTML('afterbegin', '<option value="custom">Custom</option>');
+            presetsSelect.value = 'custom';
+            return;
+        }
+
+        // Find matching preset
+        const matchingPreset = Object.entries(presets).find(([_, preset]) =>
+            preset.threshold === currentSettings.threshold &&
+            preset.above === currentSettings.above &&
+            preset.below === currentSettings.below
+        );
+
+        if (matchingPreset) {
+            presetsSelect.value = matchingPreset[0];
+        } else {
+            // If no match and not in custom mode, default to first preset
+            presetsSelect.value = Object.keys(presets)[0];
+        }
+    }
+
+    // Manual changes always set to custom
+    function handleManualChange() {
+        isCustom = true;
+        saveSettings();
+        updatePresetSelection();
+    }
+
+    speedThreshold.addEventListener('input', handleManualChange);
+    qualityAbove.addEventListener('change', handleManualChange);
+    qualityBelow.addEventListener('change', handleManualChange);
 
     // Fix preset handling
-    document.getElementById('presets').addEventListener('change', function (e) {
+    presetsSelect.addEventListener('change', function (e) {
+        if (e.target.value === 'custom') return;
+
         const preset = presets[e.target.value];
         if (!preset) return;
+
+        isCustom = false; // Clear custom state
+        const customOption = presetsSelect.querySelector('option[value="custom"]');
+        if (customOption) customOption.remove();
 
         console.log('Applying preset:', preset);
 
