@@ -26,7 +26,7 @@ function App() {
           <h1>Save Data While Speed Watching</h1>
           <p>Lower video quality automatically when watching at higher speeds on YouTube.</p>
           <div className="cta-group">
-            <a href="#install" className="cta-button">Available on Chrome Web Store</a>
+            <a href="https://chromewebstore.google.com/detail/fpffkbgdmnofpnmpeeokhaodgdkhdbpo" className="cta-button">Install from Chrome Web Store</a>
           </div>
         </section>
 
@@ -96,7 +96,7 @@ function App() {
             <div className="step">
               <span className="step-number">1</span>
               <h3>Add to Chrome</h3>
-              <p>Visit the Chrome Web Store page</p>
+              <p>Visit the <a href="https://chromewebstore.google.com/detail/fpffkbgdmnofpnmpeeokhaodgdkhdbpo">Chrome Web Store page</a></p>
             </div>
             <div className="step">
               <span className="step-number">2</span>
@@ -105,7 +105,7 @@ function App() {
             </div>
           </div>
           <div className="install-note">
-            <p>Coming soon to Chrome Web Store</p>
+            <p>Available now on Chrome Web Store</p>
           </div>
         </section>
       </main>
