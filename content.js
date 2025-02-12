@@ -8,139 +8,130 @@ function simulateClick(element) {
 	element.dispatchEvent(event);
 }
 
-// Function to estimate data saving
-function estimateDataSaving(oldQuality, newQuality) {
-	const qualityBitrates = {
-		'4320p': 80000,
-		'2160p': 40000,
-		'1440p': 16000,
-		'1080p': 8000,
-		'720p': 5000,
-		'480p': 2500,
-		'360p': 1000,
-		'240p': 500,
-		'144p': 300,
-		'Auto': 5000
-	};
+let lastQuality = 'Auto';
 
-	const duration = document.querySelector('video').duration;
-	const oldBitrate = qualityBitrates[oldQuality];
-	const newBitrate = qualityBitrates[newQuality];
-	const savings = (oldBitrate - newBitrate) * duration / 8000; // Convert to MB
-
-	chrome.storage.sync.get(['dataSaved', 'videosOptimized'], function (items) {
-		chrome.storage.sync.set({
-			dataSaved: (items.dataSaved || 0) + savings,
-			videosOptimized: (items.videosOptimized || 0) + 1
-		});
-	});
-}
-
-// Enhanced quality setting with retry mechanism
 function setQuality(quality) {
-	let retries = 3;
-	const trySetQuality = () => {
-		qualityList = [
-			'4320p',
-			'2160p',
-			'1440p',
-			'1080p',
-			'720p',
-			'480p',
-			'360p',
-			'240p',
-			'144p',
-			'Auto',
-		];
+	const qualityList = [
+		'4320p', '2160p', '1440p', '1080p', '720p',
+		'480p', '360p', '240p', '144p', 'Auto'
+	];
 
-		let index = qualityList.indexOf(quality);
+	let index = qualityList.indexOf(quality);
+	const settingsButton = document.querySelector('.ytp-settings-button');
+	if (!settingsButton) return;
 
-		const settingsButton = document.querySelector('.ytp-settings-button');
-		if (!settingsButton) { return 2; };
+	// Open settings menu
+	simulateClick(settingsButton);
 
-		simulateClick(settingsButton);
+	// First timeout to wait for settings menu
+	setTimeout(() => {
+		// Try to find quality menu item (both by text and aria-label)
+		const qualityMenuItem = Array.from(document.querySelectorAll('.ytp-menuitem'))
+			.find(item => {
+				const label = item.querySelector('.ytp-menuitem-label');
+				return label && (
+					label.textContent === 'Quality' ||
+					item.getAttribute('aria-label')?.includes('Quality')
+				);
+			});
 
-		const qualityMenuItem = Array.from(document.querySelectorAll('.ytp-menuitem-label')).find(item => item.innerText === 'Quality');
-		if (!qualityMenuItem) { return 2; }
-		var desiredQualityItem;
-		simulateClick(qualityMenuItem);
-		while (!desiredQualityItem && index <= qualityList.length) {
-			desiredQualityItem = Array.from(document.querySelectorAll('.ytp-quality-menu .ytp-menuitem')).find(item => item.innerText.includes(qualityList[index]));
-			if (desiredQualityItem) {
-				console.log(`Quality set to ${qualityList[index]}`);
-				simulateClick(desiredQualityItem);
-
-			} else {
-				console.log(`Desired quality ${qualityList[index]} is not available, trying a lower quality.`);
-				index++;
-			}
-		}
-
-		// Close the settings menu
-		simulateClick(settingsButton);
-		return 0;
-	};
-
-	const result = trySetQuality();
-	if (result === 2 && retries > 0) {
-		retries--;
-		setTimeout(trySetQuality, 1000);
-	}
-}
-
-// Function to adjust quality based on playback speed
-function adjustQuality() {
-	const player = document.querySelector('video');
-	if (!player) {
-		console.error('Video element not found.');
-		return;
-	}
-
-	chrome.storage.sync.get(['enabled', 'speedThreshold', 'qualityAbove', 'qualityBelow'], function (items) {
-		if (!items.enabled) {
-			console.log('Extension is disabled.');
+		if (!qualityMenuItem) {
+			simulateClick(settingsButton); // Close menu if quality option not found
 			return;
 		}
 
-		const speed = player.playbackRate;
-		console.log(`Current playback speed: ${speed}`);
+		simulateClick(qualityMenuItem);
 
-		const threshold = parseFloat(items.speedThreshold || '2.0');
-		const qualityAbove = items.qualityAbove || '480p';
-		const qualityBelow = items.qualityBelow || '1080p';
+		// Second timeout to wait for quality submenu
+		setTimeout(() => {
+			let foundQuality = false;
+			while (!foundQuality && index < qualityList.length) {
+				const currentQuality = qualityList[index];
+				const qualityItems = document.querySelectorAll('.ytp-menuitem');
 
-		if (speed >= threshold) {
-			setQuality(qualityAbove);
-		} else {
-			setQuality(qualityBelow);
-		}
-	});
+				for (const item of qualityItems) {
+					if (item.textContent.includes(currentQuality.replace('p', ''))) {
+						simulateClick(item);
+						console.log(`Successfully set quality to ${currentQuality}`);
+						lastQuality = currentQuality;
+						foundQuality = true;
+						break;
+					}
+				}
+
+				if (!foundQuality) {
+					console.log(`Quality ${currentQuality} not available, trying lower`);
+					index++;
+				}
+			}
+
+			// Close settings menu
+			setTimeout(() => {
+				simulateClick(settingsButton);
+			}, 100);
+		}, 150); // Increased delay for quality submenu
+	}, 150); // Increased delay for main menu
 }
 
-// Add an event listener for when the playback speed changes
-document.addEventListener('ratechange', adjustQuality, true);
+function adjustQuality() {
+	try {
+		const player = document.querySelector('video');
+		if (!player) return;
 
-// Initial adjustment
-adjustQuality();
+		chrome.storage.sync.get(['speedThreshold', 'qualityAbove', 'qualityBelow', 'enabled'], function (items) {
+			if (!items.enabled) {
+				console.log('Extension is disabled.');
+				return;
+			}
 
-// Add quality change observer
-const observer = new MutationObserver((mutations) => {
-	mutations.forEach((mutation) => {
-		if (mutation.target.className.includes('ytp-settings-menu')) {
+			const speed = player.playbackRate;
+			const threshold = parseFloat(items.speedThreshold || '2.0');
+			const qualityAbove = items.qualityAbove || '480p';
+			const qualityBelow = items.qualityBelow || '1080p';
+
+			console.log(`Speed: ${speed}, Threshold: ${threshold}`);
+			if (speed >= threshold) {
+				setQuality(qualityAbove);
+			} else {
+				setQuality(qualityBelow);
+			}
+		});
+	} catch (error) {
+		console.debug('Quality adjustment skipped');
+	}
+}
+
+// Use error boundaries for event listeners
+document.addEventListener('ratechange', (e) => {
+	try {
+		adjustQuality();
+	} catch (error) {
+		console.debug('Rate change handler skipped');
+	}
+}, true);
+
+setTimeout(adjustQuality, 1000); // Initial adjustment with delay
+
+// Add error event listener to ignore YouTube analytics errors
+window.addEventListener('error', function (e) {
+	if (e.target?.src?.includes('youtube.com/api/stats') ||
+		e.target?.src?.includes('play.google.com/log')) {
+		e.preventDefault();
+		e.stopPropagation();
+		return true;
+	}
+}, true);
+
+// Update message listener to handle force updates
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+	if (request.action === "adjustQuality") {
+		if (request.force) {
+			// Force immediate quality adjustment
+			lastQuality = 'Auto'; // Reset last quality to force update
+			adjustQuality();
+		} else {
 			adjustQuality();
 		}
-	});
-});
-
-// Start observing quality changes
-observer.observe(document.body, {
-	childList: true,
-	subtree: true
-});
-
-// Add message listener for immediate quality adjustment
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-	if (request.action === "adjustQuality") {
-		adjustQuality();
 	}
+	return true;
 });

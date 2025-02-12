@@ -33,13 +33,18 @@
         }
 
         h1 {
-            font-size: 18px;
-            /* Reduced from 20px */
+            font-size: 20px;
             color: var(--youtube-red);
-            margin: 0 0 16px 0;
-            /* Reduced from 20px */
+            margin: 0 0 4px 0;
             text-align: center;
             font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 16px;
         }
 
         .control-group {
@@ -154,6 +159,7 @@
         .content-wrapper {
             opacity: 1;
             transition: opacity 0.3s;
+            margin-bottom: 20px;
         }
 
         .content-wrapper.disabled {
@@ -161,24 +167,18 @@
             pointer-events: none;
         }
 
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin: 12px 0;
-            /* Reduced from 16px */
+        .preset-controls {
+            background: white;
             padding: 8px;
-            /* Reduced from 12px */
-            background: #f8f9fa;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #5f6368;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            margin-top: 8px;
+            transition: transform 0.2s;
         }
 
-        .preset-controls {
-            margin-top: 12px;
-            /* Reduced from 16px */
-            padding-top: 12px;
-            /* Reduced from 16px */
+        .preset-controls:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .credits {
@@ -202,7 +202,8 @@
 
 <body>
     <div class="container">
-        <h1>YouTube Quality Adjuster</h1>
+        <h1>YouTube Data Saver</h1>
+        <div class="subtitle">Smart quality control for speed watchers</div>
 
         <div class="content-wrapper">
             <div class="control-group">
@@ -246,18 +247,13 @@
             </div>
 
             <div class="preset-controls">
-                <label for="presets">Presets</label>
+                <label for="presets">Quick Presets</label>
                 <select id="presets">
-                    <option value="default">Regular</option>
-                    <option value="data-saver">Data Saver</option>
-                    <option value="high-quality">High Quality</option>
+                    <option value="efficient">Efficient (Recommended)</option>
+                    <option value="ultra-light">Ultra Light</option>
                     <option value="balanced">Balanced</option>
+                    <option value="high-quality">High Quality</option>
                 </select>
-            </div>
-
-            <div class="stats">
-                <div>📊 <span id="videosOptimized">0</span> videos</div>
-                <div>💾 <span id="dataSaved">0</span> MB saved</div>
             </div>
         </div>
 

@@ -1,12 +1,16 @@
 {
     "manifest_version": 3,
-    "name": "YouTube Quality Adjuster",
+    "name": "YouTube Data Saver",
     "version": "1.0",
-    "description": "Adjust YouTube video quality based on playback speed",
+    "description": "Smart video quality adjustment based on playback speed",
     "permissions": [
         "activeTab",
         "scripting",
-        "storage"
+        "storage",
+        "unlimitedStorage"
+    ],
+    "host_permissions": [
+        "*://*.youtube.com/*"
     ],
     "background": {
         "service_worker": "background.js"
