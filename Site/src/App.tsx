@@ -104,7 +104,7 @@ function App() {
             <div className="step">
               <span className="step-number">1</span>
               <h3>Add to Chrome</h3>
-              <p>Visit the <a href="https://chromewebstore.google.com/detail/fpffkbgdmnofpnmpeeokhaodgdkhdbpo">Chrome Web Store page</a></p>
+              <p>Visit the <a href="https://chromewebstore.google.com/detail/youtube-data-saver/fpffkbgdmnofpnmpeeokhaodgdkhdbpo">Chrome Web Store page</a></p>
             </div>
             <div className="step">
               <span className="step-number">2</span>
